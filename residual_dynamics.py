@@ -34,3 +34,9 @@ for level, F_wrong in nominal_models.items():
 
 print(residuals[0.30].shape)
 print(residuals[0.30][:5])
+
+#save the results to data 
+np.savez('data/residuals.npz', 
+          states=states, 
+          inputs=inputs, 
+          **{f'residual_{level}': residuals[level] for level in discrepancy_levels})
