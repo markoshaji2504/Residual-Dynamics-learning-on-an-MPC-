@@ -21,11 +21,11 @@ def build_dynamics_functions(l, m=1.0, b=0.1, g=9.81, dt=0.02):
     x_next = x + dt/6 * (k1 + 2*k2 + 2*k3 + k4)
     F = ca.Function('F', [x, u], [x_next])
 
-    return f, F
+    return f, F, x, u
 
 
 L_TRUE = 0.5
-f, F = build_dynamics_functions(l=L_TRUE)
+f, F,x,u = build_dynamics_functions(l=L_TRUE)
 #RK4 discritization of the system dynamics 
 
 

@@ -8,7 +8,7 @@ nominal_models = {}
 #create the nominal models for each discrepancy level described above 
 for level in discrepancy_levels:
     l_wrong = L_TRUE * (1 - level)
-    f_wrong, F_wrong = build_dynamics_functions(l=l_wrong)
+    f_wrong, F_wrong,x_wrong,u_wrong = build_dynamics_functions(l=l_wrong)
     nominal_models[level] = F_wrong
 #we end up with the nominal models array which contains all the dynamics for the base models that we will enchance witht the neural networks
 #printing to make sure we get a logical output 
