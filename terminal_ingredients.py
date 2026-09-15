@@ -1,54 +1,39 @@
 from Dynamics import build_dynamics_functions
+from scipy.linalg import solve_discrete_are
 import casadi as ca
 import numpy as np
-from scipy.linalg import solve_discrete_are #necessary for the algebaraic discrete ricatti equation 
-
 
 L_TRUE = 0.5
-DISCREPANCY = 0.30  # start with one level, generalize later
+discrepancy_levels = [0.05, 0.15, 0.30, 0.50, 0.75]
 
-
-l_wrong = L_TRUE * (1 - DISCREPANCY)
-f_wrong, F_wrong ,x,u= build_dynamics_functions(l=l_wrong)
-#at ths point we edit the function to return x and u @@@do it now if not already done 
-#edited the function to return x and u 
-
-
-#compute the jacobians for each discrepancy level 
-
-
-A_sym = ca.jacobian(f_wrong(x, u), x)
-B_sym = ca.jacobian(f_wrong(x, u), u)
-
-jac_func = ca.Function('jacobian_function', [x, u], [A_sym, B_sym])
+Q = np.eye(2)
+R = np.array([[1.0]])
 
 x_eq = np.array([0.0, 0.0])
 u_eq = np.array([0.0])
 
-A, B = jac_func(x_eq, u_eq)
-A = np.array(A)
-B = np.array(B)
+terminal_ingredients = {}
 
-print("A =", A)
-print("B =", B)
+for level in discrepancy_levels:
+    l_wrong = L_TRUE * (1 - level)
+    f_wrong, F_wrong, x, u = build_dynamics_functions(l=l_wrong)
 
-Q = np.eye(2)
-R = np.array([[1.0]]) #Q and R necessary for solving the discrete algebaric ricatti equation 
+    A_sym = ca.jacobian(f_wrong(x, u), x)
+    B_sym = ca.jacobian(f_wrong(x, u), u)
+    jac_func = ca.Function('jacobian_func', [x, u], [A_sym, B_sym])
 
-#solve the dac
+    A, B = jac_func(x_eq, u_eq)
+    A = np.array(A)
+    B = np.array(B)
 
-P = solve_discrete_are(A, B, Q, R)
-print("P =", P)
+    P = solve_discrete_are(A, B, Q, R)
+    K = -np.linalg.inv(R + B.T @ P @ B) @ (B.T @ P @ A)
 
-#now calculate gain K 
+    eigenvalues = np.linalg.eigvals(A + B @ K)
+    is_stable = np.all(np.abs(eigenvalues) < 1)
 
-K = -np.linalg.inv(R + B.T @ P @ B) @ (B.T @ P @ A)
-print("K =", K)
+    terminal_ingredients[level] = {
+        'A': A, 'B': B, 'P': P, 'K': K, 'stable': is_stable
+    }
 
-#check if the computed matrices make the actual system stable?? 
-# #confirm the computed K stabilizes the linearized system 
-eigenvalues = np.linalg.eigvals(A + B @ K)
-print("Eigenvalues of A + BK:", eigenvalues)
-
-# if egien values have all magnitude less than one then the system is stable since it is a linear system 
-
+    print(f"Discrepancy {level}: stable = {is_stable}, eigenvalues = {eigenvalues}")
