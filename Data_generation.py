@@ -37,33 +37,35 @@ def generate_dataset(initial_conditions, n_steps, u_max):
         all_data.extend(trajectory_data)
     return all_data
 
+#only run if it is called by the actual file and not another one
 
-initial_conditions = [
-    [0.1, 0.0], [0.2, 0.0], [0.3, 0.0], [0.4, 0.0], [0.5, 0.0],
-    [-0.1, 0.0], [-0.2, 0.0], [-0.3, 0.0], [-0.4, 0.0], [-0.5, 0.0],
-    [0.2, 0.3], [0.2, -0.3], [-0.2, 0.3], [-0.2, -0.3],
-    [0.4, 0.5], [0.4, -0.5], [-0.4, 0.5], [-0.4, -0.5],
-]
+if __name__ == "__main__":
+ initial_conditions = [
+     [0.1, 0.0], [0.2, 0.0], [0.3, 0.0], [0.4, 0.0], [0.5, 0.0],
+     [-0.1, 0.0], [-0.2, 0.0], [-0.3, 0.0], [-0.4, 0.0], [-0.5, 0.0],
+     [0.2, 0.3], [0.2, -0.3], [-0.2, 0.3], [-0.2, -0.3],
+     [0.4, 0.5], [0.4, -0.5], [-0.4, 0.5], [-0.4, -0.5],
+ ]
 
-n_steps = 100
-u_max = 5
-#testing the generate data set function 
-dataset = generate_dataset(initial_conditions, n_steps, u_max)
-#print(f"Total number of data points: {len(dataset)}")
-#print("First entry:", dataset[0])
-#print("Last entry:", dataset[-1])
+ n_steps = 100
+ u_max = 5
+ #testing the generate data set function 
+ dataset = generate_dataset(initial_conditions, n_steps, u_max)
+ #print(f"Total number of data points: {len(dataset)}")
+ #print("First entry:", dataset[0])
+ #print("Last entry:", dataset[-1])
 
 
-#save the data generation file so we have the same data each time 
-import numpy as np
+ #save the data generation file so we have the same data each time 
+ import numpy as np
 
-# convert to arrays for easier saving/loading
-states = np.array([entry[0] for entry in dataset])
-inputs = np.array([entry[1] for entry in dataset])
-next_states = np.array([entry[2] for entry in dataset])
+ # convert to arrays for easier saving/loading
+ states = np.array([entry[0] for entry in dataset])
+ inputs = np.array([entry[1] for entry in dataset])
+ next_states = np.array([entry[2] for entry in dataset])
 
-np.savez('data/pendulum_dataset.npz', states=states, inputs=inputs, next_states=next_states)
-loaded = np.load('data/pendulum_dataset.npz')
-print(loaded['states'].shape)
-print(loaded['inputs'].shape)
-print(loaded['next_states'].shape)
+ np.savez('data/pendulum_dataset.npz', states=states, inputs=inputs, next_states=next_states)
+ loaded = np.load('data/pendulum_dataset.npz')
+ print(loaded['states'].shape)
+ print(loaded['inputs'].shape)
+ print(loaded['next_states'].shape)
