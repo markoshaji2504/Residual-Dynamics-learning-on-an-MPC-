@@ -60,3 +60,22 @@ print(near_eq_states.shape)
 print(near_eq_inputs.shape)
 print(near_eq_next_states.shape)
 
+near_eq_residuals = {}
+
+for level in discrepancy_levels:
+    l_wrong = L_TRUE * (1 - level)
+    f_wrong, F_wrong, x_w, u_w = build_dynamics_functions(l=l_wrong)
+
+    predicted_wrong = np.array([
+        np.array(F_wrong(near_eq_states[i], near_eq_inputs[i])).flatten()
+        for i in range(len(near_eq_states))
+    ])
+
+    residual = near_eq_next_states - predicted_wrong
+    near_eq_residuals[level] = residual
+
+W_bounds = {}
+for level in discrepancy_levels:
+    w_bound = np.max(np.abs(near_eq_residuals[level]), axis=0)
+    W_bounds[level] = w_bound
+    print(f"Discrepancy {level}: W bound = {w_bound}")
