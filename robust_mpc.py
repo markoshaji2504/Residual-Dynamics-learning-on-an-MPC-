@@ -1,4 +1,5 @@
 from Dynamics import build_dynamics_functions
+from scipy.linalg import solve_discrete_are #for the discrete aglebraic ricatti equation 
 import do_mpc
 import casadi as ca
 import numpy as np
@@ -10,6 +11,31 @@ f_true, F_true, x_true, u_true = build_dynamics_functions(l=L_TRUE)
 
 l_wrong = L_TRUE * (1 - DISCREPANCY)
 f_wrong, F_wrong, x_wrong, u_wrong = build_dynamics_functions(l=l_wrong)
+
+f_true, F_true, x_true, u_true = build_dynamics_functions(l=L_TRUE)
+
+l_wrong = L_TRUE * (1 - DISCREPANCY)
+f_wrong, F_wrong, x_wrong, u_wrong = build_dynamics_functions(l=l_wrong)
+
+# --- INSERT HERE: compute P_level for this discrepancy level ---
+f_wrong_lin, F_wrong_lin, x_lin, u_lin = build_dynamics_functions(l=l_wrong)
+
+A_sym = ca.jacobian(f_wrong_lin(x_lin, u_lin), x_lin)
+B_sym = ca.jacobian(f_wrong_lin(x_lin, u_lin), u_lin)
+jac_func = ca.Function('jacobian_func', [x_lin, u_lin], [A_sym, B_sym])
+
+x_eq = np.array([0.0, 0.0])
+u_eq = np.array([0.0])
+
+A, B = jac_func(x_eq, u_eq)
+A = np.array(A)
+B = np.array(B)
+
+Q_ric = np.eye(2)
+R_ric = np.array([[1.0]])
+
+P_level = solve_discrete_are(A, B, Q_ric, R_ric)
+print("P_level =", P_level)
 
 #build the mpc model incorporating length as an uncertain parameter to aid in robustness 
 
