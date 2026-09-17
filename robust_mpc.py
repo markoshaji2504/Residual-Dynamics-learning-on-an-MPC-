@@ -12,11 +12,6 @@ f_true, F_true, x_true, u_true = build_dynamics_functions(l=L_TRUE)
 l_wrong = L_TRUE * (1 - DISCREPANCY)
 f_wrong, F_wrong, x_wrong, u_wrong = build_dynamics_functions(l=l_wrong)
 
-f_true, F_true, x_true, u_true = build_dynamics_functions(l=L_TRUE)
-
-l_wrong = L_TRUE * (1 - DISCREPANCY)
-f_wrong, F_wrong, x_wrong, u_wrong = build_dynamics_functions(l=l_wrong)
-
 # --- INSERT HERE: compute P_level for this discrepancy level ---
 f_wrong_lin, F_wrong_lin, x_lin, u_lin = build_dynamics_functions(l=l_wrong)
 
@@ -84,4 +79,16 @@ mpc.set_param(**setup_mpc)
 
 w_bound = 0.05  # placeholder margin for now, in length units — we'll tie this to your actual W bound shortly
 l_scenarios = np.array([l_wrong, l_wrong * (1 + w_bound), l_wrong * (1 - w_bound)])
+
 mpc.set_uncertainty_values(l_param=l_scenarios)
+
+x_vec = ca.vertcat(theta, theta_dot)
+mterm = ca.mtimes([x_vec.T, P_level, x_vec])
+lterm = mterm + 0.1 * u**2
+
+mpc.set_objective(mterm=mterm, lterm=lterm)
+mpc.set_rterm(u=0.01)
+
+mpc.bounds['lower', '_u', 'u'] = -5
+mpc.bounds['upper', '_u', 'u'] = 5
+mpc.setup()
