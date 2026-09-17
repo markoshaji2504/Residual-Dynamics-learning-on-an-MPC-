@@ -92,3 +92,23 @@ mpc.set_rterm(u=0.01)
 mpc.bounds['lower', '_u', 'u'] = -5
 mpc.bounds['upper', '_u', 'u'] = 5
 mpc.setup()
+
+#true dynamics simulator 
+
+
+sim_model = do_mpc.model.Model('discrete')
+
+theta_sim = sim_model.set_variable(var_type='_x', var_name='theta')
+theta_dot_sim = sim_model.set_variable(var_type='_x', var_name='theta_dot')
+u_sim = sim_model.set_variable(var_type='_u', var_name='u')
+
+x_sim = ca.vertcat(theta_sim, theta_dot_sim)
+x_next_sim = F_true(x_sim, u_sim)
+
+sim_model.set_rhs('theta', x_next_sim[0])
+sim_model.set_rhs('theta_dot', x_next_sim[1])
+sim_model.setup()
+
+simulator = do_mpc.simulator.Simulator(sim_model)
+simulator.set_param(t_step=0.02)
+simulator.setup()
