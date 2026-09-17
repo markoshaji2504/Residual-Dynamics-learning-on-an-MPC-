@@ -79,3 +79,23 @@ for level in discrepancy_levels:
     w_bound = np.max(np.abs(near_eq_residuals[level]), axis=0)
     W_bounds[level] = w_bound
     print(f"Discrepancy {level}: W bound = {w_bound}")
+
+
+u_max = 5  # your torque limit, same as used in the nominal MPC
+
+feasibility_results = {}
+
+for level in discrepancy_levels:
+    K = terminal_ingredients[level]['K']
+    w_bound = W_bounds[level]
+
+    u_correction = np.abs(K @ w_bound)
+    is_feasible = u_correction[0] < u_max
+
+    feasibility_results[level] = {
+        'u_correction': u_correction[0],
+        'feasible': is_feasible
+    }
+
+    print(f"Discrepancy {level}: required correction = {u_correction[0]:.4f}, "
+          f"within torque limit ({u_max}) = {is_feasible}")
