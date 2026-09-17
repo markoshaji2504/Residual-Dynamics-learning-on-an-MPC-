@@ -31,12 +31,13 @@ f, F,x,u = build_dynamics_functions(l=L_TRUE)
 
 
 # simulate a few steps forward with no control input, starting near upright TEST
-
-x_current = [0.3, 0.0]
-for step in range(10):
-    x_current = F(x_current, 0.0)
-    x_current = [float(x_current[0]), float(x_current[1])]  # convert back to plain numbers
-    print(f"step {step}: theta = {x_current[0]:.4f}, theta_dot = {x_current[1]:.4f}")
+#incroporate this to run only if dynamics is run as the main file 
+if __name__ == "__main__":
+ x_current = [0.3, 0.0]
+ for step in range(10):
+     x_current = F(x_current, 0.0)
+     x_current = [float(x_current[0]), float(x_current[1])]  # convert back to plain numbers
+     print(f"step {step}: theta = {x_current[0]:.4f}, theta_dot = {x_current[1]:.4f}")
 
 #test is good works as of 09/09/2026
 
