@@ -44,3 +44,18 @@ x_next = x + dt/6 * (k1 + 2*k2 + 2*k3 + k4)
 model.set_rhs('theta', x_next[0])
 model.set_rhs('theta_dot', x_next[1])
 model.setup()
+
+#n_robust is now non zero telling the mpc that there is a parameter we are uncertain about and that is constantly wrong 
+mpc = do_mpc.controller.MPC(model)
+
+setup_mpc = {
+    'n_horizon': 20,
+    't_step': 0.02,
+    'n_robust': 1,
+    'store_full_solution': True,
+}
+mpc.set_param(**setup_mpc)
+
+w_bound = 0.05  # placeholder margin for now, in length units — we'll tie this to your actual W bound shortly
+l_scenarios = np.array([l_wrong, l_wrong * (1 + w_bound), l_wrong * (1 - w_bound)])
+mpc.set_uncertainty_values(l_param=l_scenarios)
