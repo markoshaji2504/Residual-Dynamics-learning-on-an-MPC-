@@ -5,7 +5,7 @@ import casadi as ca
 import numpy as np
 
 L_TRUE = 0.5
-DISCREPANCY = 0.30  # start with one level
+DISCREPANCY = 0.75  # start with one level
 
 f_true, F_true, x_true, u_true = build_dynamics_functions(l=L_TRUE)
 
