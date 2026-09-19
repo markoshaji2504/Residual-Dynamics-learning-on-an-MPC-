@@ -65,3 +65,7 @@ Is it illogical that this passes even at 75%? No — but it does mean this check
 
 "the one-step feasibility check does not account for accumulated disturbance effects over the prediction horizon, and passing this check is not sufficient to conclude the full theorem's guarantee holds; closed-loop simulation is used to more directly assess practical stability."
 What changed and why: n_robust: 1 tells do-mpc to branch the scenario tree at the first step of the horizon (recall, do-mpc's own documentation specifically recommends this setting when your uncertain parameter is constant over time rather than changing at every step — which matches your case, since l_param's "wrongness" doesn't change during a single control run).
+
+Next: rebuild the NN's forward pass symbolically in CasADi
+
+Now the actual bridging work — reconstructing what your PyTorch network computes, but using CasADi symbolic operations, so it can be embedded directly into your MPC's dynamics equation.
