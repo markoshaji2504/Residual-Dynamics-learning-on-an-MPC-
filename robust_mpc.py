@@ -129,3 +129,22 @@ for k in range(n_steps):
     x0 = simulator.make_step(u0)
 
 print("Final state:", x0)
+
+#Neural network implementation stage 
+import torch
+from residual_nn import ResidualNN
+
+nn_model = ResidualNN()
+nn_model.load_state_dict(torch.load(f'models/residual_nn_{DISCREPANCY}.pt'))
+nn_model.eval()
+
+weights = []
+biases = []
+for layer in nn_model.net:
+    if isinstance(layer, torch.nn.Linear):
+        weights.append(layer.weight.detach().numpy())
+        biases.append(layer.bias.detach().numpy())
+
+print(weights[0].shape)
+print(weights[1].shape)
+print(weights[2].shape)
