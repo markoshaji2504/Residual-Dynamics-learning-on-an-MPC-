@@ -70,6 +70,12 @@ for level in discrepancy_levels:
     results[level] = val_loss.item()
     trained_models[level] = model
 
-    for level, mse in results.items():
-       rmse = math.sqrt(mse)
-       print(f"Discrepancy {level}: RMSE = {rmse:.4f}")
+    # save this level's trained weights
+    torch.save(model.state_dict(), f'models/residual_nn_{level}.pt')
+
+# this loop now runs once, after ALL levels have finished training
+for level, mse in results.items():
+    rmse = math.sqrt(mse)
+    print(f"Discrepancy {level}: RMSE = {rmse:.4f}")
+
+
