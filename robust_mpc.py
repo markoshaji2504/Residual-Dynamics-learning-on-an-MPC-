@@ -112,3 +112,20 @@ sim_model.setup()
 simulator = do_mpc.simulator.Simulator(sim_model)
 simulator.set_param(t_step=0.02)
 simulator.setup()
+
+
+
+
+
+#closed loop test for 30 percent discreapncy without NN
+x0 = np.array([0.3, 0.0])
+mpc.x0 = x0
+simulator.x0 = x0
+mpc.set_initial_guess()
+
+n_steps = 300
+for k in range(n_steps):
+    u0 = mpc.make_step(x0)
+    x0 = simulator.make_step(u0)
+
+print("Final state:", x0)
