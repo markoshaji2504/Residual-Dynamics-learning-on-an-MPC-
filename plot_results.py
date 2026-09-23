@@ -3,26 +3,25 @@ import matplotlib.pyplot as plt
 
 discrepancy_levels = [0.05, 0.15, 0.30, 0.50, 0.75]
 dt = 0.02
-
 fig, axes = plt.subplots(len(discrepancy_levels), 1, figsize=(8, 16), sharex=True)
-
-
-
 for i, level in enumerate(discrepancy_levels):
     traj_false = np.load(f'results/traj_{level}_False.npz')['trajectory']
     traj_true = np.load(f'results/traj_{level}_True.npz')['trajectory']
-    traj_plain = np.load(f'results/traj_{level}_plain.npz')['trajectory']   # NEW
+    traj_plain = np.load(f'results/traj_{level}_plain.npz')['trajectory']
 
     time = np.arange(len(traj_false)) * dt
 
-    axes[i].plot(time, traj_false[:, 0], label='Robust, nominal only')
-    axes[i].plot(time, traj_true[:, 0], label='Robust, NN-corrected')
-    axes[i].plot(time, traj_plain[:, 0], label='Plain MPC, nominal only', linestyle=':')   # NEW
-    axes[i].axhline(0, color='gray', linestyle='--', linewidth=0.5)
+    axes[i].plot(time, traj_plain[:, 0], label='Plain MPC, nominal only',
+                 color='green', linewidth=2.5, linestyle='--', zorder=3)
+    axes[i].plot(time, traj_false[:, 0], label='Robust, nominal only',
+                 color='tab:blue', linewidth=1.0, alpha=0.6, zorder=2)
+    axes[i].plot(time, traj_true[:, 0], label='Robust, NN-corrected',
+                 color='tab:orange', linewidth=1.5, zorder=4)
+
+    axes[i].axhline(0, color='gray', linestyle=':', linewidth=0.5, zorder=1)
     axes[i].set_ylabel('theta [rad]')
     axes[i].set_title(f'Discrepancy = {level}')
     axes[i].legend(fontsize=8)
-axes[-1].set_xlabel('time [s]')
 plt.tight_layout()
 plt.savefig('results/theta_comparison.png', dpi=150)
 plt.show()
