@@ -142,7 +142,7 @@ if __name__ == "__main__":
         for use_nn in [False, True]:
             key = (level, use_nn)
             print(f"Running: discrepancy={level}, NN correction={use_nn}")
-            traj = run_closed_loop_test(level, use_nn)
+            traj = run_closed_loop_test(level, use_nn,n_steps=900) #changed to 900 instead of 300 
             all_results[key] = traj
             np.savez(f'results/traj_{level}_{use_nn}.npz', trajectory=traj)
 
