@@ -136,14 +136,22 @@ def run_closed_loop_test(discrepancy, use_nn_correction, n_steps=300, x0_init=No
     return np.array(trajectory)
 
 
+
 if __name__ == "__main__":
-    all_results = {}
+    # all_results = {}
+    # for level in discrepancy_levels:
+    #     for use_nn in [False, True]:
+    #         key = (level, use_nn)
+    #         print(f"Running: discrepancy={level}, NN correction={use_nn}")
+    #         traj = run_closed_loop_test(level, use_nn, n_steps=900)
+    #         all_results[key] = traj
+    #         np.savez(f'results/traj_{level}_{use_nn}.npz', trajectory=traj)
+    # print("All runs complete.")
+
+    print("\n--- Final theta values ---")
     for level in discrepancy_levels:
         for use_nn in [False, True]:
-            key = (level, use_nn)
-            print(f"Running: discrepancy={level}, NN correction={use_nn}")
-            traj = run_closed_loop_test(level, use_nn,n_steps=900) #changed to 900 instead of 300 
-            all_results[key] = traj
-            np.savez(f'results/traj_{level}_{use_nn}.npz', trajectory=traj)
-
-    print("All runs complete.")
+            traj = np.load(f'results/traj_{level}_{use_nn}.npz')['trajectory']
+            print(f"{level}, NN={use_nn}: final theta = {traj[-1, 0]:.4f}")
+        traj_plain = np.load(f'results/traj_{level}_plain.npz')['trajectory']
+        print(f"{level}, plain: final theta = {traj_plain[-1, 0]:.4f}")

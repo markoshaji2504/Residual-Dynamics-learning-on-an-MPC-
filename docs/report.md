@@ -172,6 +172,18 @@ residual network's prediction — reconstructed symbolically to allow
 integration with the optimization framework — is added to the nominal
 model's prediction at every step of the controller's internal dynamics.
 
+### Plain MPC Baseline and Margin Sensitivity Check
+
+To isolate the specific contribution of the multi-stage robustness
+mechanism from that of the residual correction, we additionally evaluate
+a plain (single-scenario, n_robust = 0) MPC using the same discrepant
+nominal model, at each discrepancy level. We also verify that our
+multi-stage implementation responds correctly to its uncertainty margin
+by testing a substantially wider margin (±30%, versus ±5% used
+throughout the main study) at one discrepancy level, confirming the
+mechanism produces measurably different behavior when the margin is
+large enough to matter.
+
 ### Closed-Loop Evaluation
 
 For each of the five discrepancy levels, we run two closed-loop
@@ -181,3 +193,192 @@ the residual correction added. Both are evaluated against the same true
 simulated dynamics, from the same initial condition (θ = 0.3 rad,
 θ̇ = 0 rad/s). This yields ten trajectories in total, forming the basis
 of the results presented below.
+
+## Results
+
+### Residual Learnability
+
+Figure 1 shows the trained neural network's validation RMSE at each
+discrepancy level. Prediction error increases gradually through 50%
+discrepancy (RMSE 0.012 to 0.077), then rises sharply at 75% (RMSE
+0.339) — a roughly 4-5x jump compared to the increase seen at any prior
+step. This suggests 75% discrepancy represents a qualitatively harder
+regime for residual learning, not simply a continuation of the trend
+observed at lower severities.
+
+### Closed-Loop Stability
+
+Figure 2 shows the closed-loop trajectory of the pendulum angle (θ) over
+an 18-second window, for three conditions at each of five discrepancy
+levels: a plain MPC using the discrepant nominal model, a robust
+(multi-stage) MPC using the same model, and the robust MPC augmented
+with the residual neural network correction.
+
+Across all five levels, the plain and robust (nominal-only) conditions
+are visually indistinguishable, indicating the multi-stage uncertainty
+scenarios (±5% margin) contributed negligibly to closed-loop behavior at
+this margin size; we return to this observation, and its verification,
+in the Discussion.
+
+The residual-corrected condition shows a distinct, non-monotonic pattern
+across discrepancy severity:
+
+- **At 5% and 15% discrepancy**, the NN-corrected trajectory converges
+  more slowly than the uncorrected baseline, settling at a small but
+  non-zero final angle (≈0.02-0.14 rad) where the uncorrected baseline
+  converges essentially to zero.
+- **At 30% discrepancy**, the NN-corrected trajectory converges past
+  zero to a small negative angle (≈-0.07 rad), while the uncorrected
+  baseline remains essentially static around 0.17 rad — a substantial,
+  qualitative improvement.
+- **At 50% discrepancy**, the uncorrected baseline diverges completely,
+  settling near θ ≈ 2.28 rad; the NN-corrected controller converges
+  cleanly to near zero — the clearest single demonstration of the
+  correction's benefit.
+- **At 75% discrepancy**, the uncorrected baseline settles at the
+  downward equilibrium (θ ≈ π); the NN-corrected controller does not
+  reach upright, but converges via a damped oscillation to an
+  intermediate angle (≈1.5-1.75 rad) — a partial, but incomplete,
+  improvement.
+
+Figure 3 summarizes the final angular deviation at t = 18s across all
+three conditions and discrepancy levels. Figure 4 shows the phase-space
+trajectory (θ vs. θ̇) for the 75% discrepancy case specifically,
+illustrating the qualitative difference between the uncorrected
+controller's single-arc convergence to the downward equilibrium and the
+NN-corrected controller's damped oscillatory approach to an intermediate
+point.
+
+### Simplified Feasibility Check
+
+Applying the necessary-condition feasibility check described in Methods
+(worst-case corrective torque vs. actuator limit), all five discrepancy
+levels were found feasible, including 75%, where the closed-loop
+simulation nonetheless failed to reach the upright target. This
+discrepancy between the simplified check's prediction and the observed
+closed-loop outcome is addressed in the Discussion.
+
+
+## Discussion
+
+### The Benefit of Residual Learning Is Not Uniform
+
+The central finding of this study is that residual learning's practical
+value depends strongly on the severity of the underlying model
+discrepancy. At low discrepancy (5-15%), there is little systematic
+error for the network to correct, and the learned correction appears to
+introduce a small amount of prediction noise that mildly *slows*
+convergence relative to the uncorrected baseline — a modest but
+consistent negative result. At moderate-to-high discrepancy (30-50%),
+the correction provides substantial, unambiguous benefit, most clearly
+at 50%, where it is the difference between complete failure (divergence
+to the wrong equilibrium) and clean convergence to the target. At the
+most extreme level tested (75%), the correction meaningfully improves
+the outcome — replacing a static failure at the downward equilibrium
+with a damped oscillation toward an intermediate angle — but does not
+fully resolve it.
+
+This pattern is consistent with, and corroborated by, the residual
+network's own validation error (Figure 1): the sharp increase in RMSE
+between 50% and 75% discrepancy directly foreshadows the point at which
+closed-loop performance also transitions from full recovery to partial
+recovery. The consistency between these two independently measured
+quantities — open-loop prediction accuracy and closed-loop control
+outcome — strengthens confidence that both are capturing a genuine
+property of the system, rather than measurement noise.
+
+### The Robustness Margin Contributed Negligibly at the Tested Setting
+
+The near-identical performance of the plain and robust (multi-stage)
+MPC formulations, observed across all five discrepancy levels, might
+suggest a flaw in the robust implementation. We verified this is not
+the case: a supplementary test using a substantially wider uncertainty
+margin (±30%, rather than the ±5% used throughout the main study)
+produced a measurably different, and more conservative, closed-loop
+outcome, confirming the multi-stage mechanism responds correctly to its
+configured margin.
+
+The negligible effect observed at the ±5% margin instead reflects the
+relationship between that margin and the discrepancy severities under
+study: because ±5% is small relative to discrepancies of up to 75%, the
+three scenarios considered by the optimizer at each solve are close
+enough to one another that little genuine disagreement exists for the
+controller to hedge against. As a result, ordinary MPC feedback — which
+both the plain and robust formulations share — accounts for the large
+majority of the stabilization observed in the nominal-only baseline,
+and the residual correction, not the robustness margin, is the primary
+source of the improvements reported above. This finding is itself
+useful: it isolates residual learning as the dominant contributing
+factor in this study's results, independent of the specific robust MPC
+formulation's design.
+
+### The Simplified Feasibility Check Understates Real-World Failure
+
+The necessary-condition feasibility check (Methods) found all five
+discrepancy levels technically feasible under actuator constraints,
+including 75% — a level at which the closed-loop simulation clearly
+fails to reach the control objective. This gap illustrates a known
+limitation of the simplified check: it evaluates only a single
+worst-case correction at one instant, and does not account for
+disturbances compounding over the full prediction horizon, nor for the
+system's actual nonlinear behavior far from the equilibrium about which
+the check's linear quantities (K, P) were derived. The closed-loop
+simulation, not the simplified check, should be treated as the primary
+evidence of practical stability in this study.
+
+### Limitations
+
+This study makes several deliberate simplifications relative to the
+full LBMPC theoretical framework, made explicit here for transparency:
+
+- The terminal set size (α) was chosen conservatively rather than
+  rigorously derived from the nonlinear system's Taylor-remainder error
+  bound.
+- The uncertainty bound (W) was estimated empirically from a dataset
+  restricted to a bounded neighborhood of the equilibrium, rather than
+  derived analytically.
+- The full disturbance-invariant set construction required for LBMPC's
+  formal stability guarantee was not implemented; the necessary-condition
+  feasibility check used here is a practical proxy, not a substitute for
+  the complete guarantee.
+- The residual network's uncertainty bound (used to justify the robust
+  formulation) was held fixed across the NN-corrected and nominal-only
+  conditions, rather than reduced to reflect the NN's improved accuracy;
+  this may understate the potential benefit of combining residual
+  learning with an appropriately-tuned robustness margin.
+- Results are reported for a single initial condition (θ = 0.3 rad);
+  generalization to other starting states was not tested.
+
+### Future Work
+
+Natural extensions include: deriving the terminal set size and
+uncertainty bound analytically rather than conservatively; implementing
+the full tube-MPC invariant-set construction to obtain a rigorous rather
+than necessary-condition-only stability guarantee; extending the
+residual learning approach to a second, more complex nonlinear system;
+and exploring an online-adaptive variant of the residual correction, in
+which the network continues to update using data collected during
+closed-loop operation, as in the original LBMPC formulation.
+
+## Conclusion
+
+This study empirically characterized the practical value of residual
+learning for a robust MPC controller operating under a range of
+deliberately induced nominal-model errors. Rather than deriving a new
+theoretical stability guarantee, we applied the LBMPC framework's
+existing decoupling of safety and performance, implemented a simplified
+necessary-condition feasibility check in place of its full invariant-set
+construction, and relied on direct closed-loop simulation as our primary
+evidence of practical stability — with each simplification stated
+explicitly.
+
+We found that residual learning's benefit is neither absent nor
+universal: it provides no advantage, and a small disadvantage, at low
+model discrepancy; substantial, unambiguous benefit at moderate-to-high
+discrepancy, rescuing cases the uncorrected controller fails outright;
+and partial, incomplete benefit at the most severe discrepancy tested.
+This non-uniform pattern, corroborated independently by the network's
+own prediction accuracy, is the central empirical contribution of this
+work, and we hope it offers a useful, honestly-scoped data point for
+understanding when learning-enhanced control is — and is not —
+worthwhile.

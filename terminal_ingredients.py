@@ -99,3 +99,16 @@ for level in discrepancy_levels:
 
     print(f"Discrepancy {level}: required correction = {u_correction[0]:.4f}, "
           f"within torque limit ({u_max}) = {is_feasible}")
+    import matplotlib.pyplot as plt
+
+w_bound_magnitudes = [np.linalg.norm(W_bounds[level]) for level in discrepancy_levels]
+
+plt.figure(figsize=(6, 4))
+plt.plot(discrepancy_levels, w_bound_magnitudes, marker='o', linewidth=2, color='tab:red')
+plt.xlabel('Nominal model length discrepancy')
+plt.ylabel('Uncertainty bound magnitude ||W||')
+plt.title('Empirical uncertainty bound vs. discrepancy severity')
+plt.grid(True, alpha=0.3)
+plt.tight_layout()
+plt.savefig('results/w_bound_vs_discrepancy.png', dpi=150)
+plt.show()
